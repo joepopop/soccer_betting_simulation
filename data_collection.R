@@ -15,7 +15,7 @@ get_table <- function(file){
     html_table() 
 }
 
-fixture_data <- data %>%  
+fixture_data <- fixture_data %>%  
   janitor::clean_names() %>% 
   filter(!grepl('Relegation', round)) %>% 
   mutate_all(na_if,"") %>% 
@@ -87,7 +87,7 @@ odds_data <- odds_files %>%
   reduce(bind_rows)        
 
 odds_data <- odds_data %>% 
-  janitor::clean_names() %>% 
+  janitor::clean_names() %>% view()
   rename(home = home_team) %>%
   mutate(
     date = dmy(date)
@@ -139,7 +139,7 @@ odds_data <- odds_data %>%
 
 # combined data ----
 full_data <- full_join(fixture_data, odds_data) %>% 
-  select(-contains("365c"), -contains("max"), -contains("avg")) %>% 
+  select(-contains("365c"), -contains("avg")) %>% 
   drop_na(wk, b365h, b365d, b365a, bwh, bwd, bwa, iwh, iwd, iwa, psh, psd, psa, whh, whd, wha, vch, vcd, vca) %>% 
   mutate(season = as.character(season))
 
