@@ -75,7 +75,7 @@ for (i in 1:length(models_list)){
 profit <- profit %>%
   full_join(
     temp %>%
-      filter(get(str_c(models_list[i], ".pred_class")) == "D") %>%
+      filter(get(str_c(models_list[i], ".pred_class")) == "A") %>%
       mutate(
         !! str_c(models_list[i], "_profit")  := case_when(
           result == get(str_c(models_list[i], ".pred_class")) & result == "H" ~ (max_h) - 1,
@@ -94,7 +94,7 @@ profit <- profit %>%
 mean(profit$rf_profit, na.rm = T)
 
 
-D_pred <- profit %>% 
+A_pred <- profit %>% 
   pivot_longer(ends_with("cum_profit"),names_to = "cum_profit_names", values_to = "cum_profit_values") %>% 
   pivot_longer(ends_with("profit"),names_to = "profit_names", values_to = "profit_values") %>% 
   mutate(cum_profit_names =
@@ -107,8 +107,8 @@ D_pred <- profit %>%
   ggplot(aes(date, cum_profit_values, color = cum_profit_names)) +
   geom_point(size = 0.5, alpha = 0.15) +
   labs(
-    title = "Results from betting only when 'D' is predicted",
-    y = "Cumulative profit",
+    title = "Results from betting only when 'A' is predicted",
+    y = "Cumulative profit ($)",
     x = "Date",
     color = "Models"
   ) +
