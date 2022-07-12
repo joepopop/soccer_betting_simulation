@@ -75,7 +75,7 @@ for (i in 1:length(models_list)){
 profit <- profit %>%
   full_join(
     temp %>%
-      # filter(get(str_c(models_list[i], ".pred_class")) == "H") %>% 
+      filter(get(str_c(models_list[i], ".pred_class")) == "D") %>%
       mutate(
         !! str_c(models_list[i], "_profit")  := case_when(
           result == get(str_c(models_list[i], ".pred_class")) & result == "H" ~ (max_h) - 1,
@@ -94,7 +94,7 @@ profit <- profit %>%
 mean(profit$rf_profit, na.rm = T)
 
 
-H_pred <- profit %>% 
+D_pred <- profit %>% 
   pivot_longer(ends_with("cum_profit"),names_to = "cum_profit_names", values_to = "cum_profit_values") %>% 
   pivot_longer(ends_with("profit"),names_to = "profit_names", values_to = "profit_values") %>% 
   mutate(cum_profit_names =
@@ -107,7 +107,7 @@ H_pred <- profit %>%
   ggplot(aes(date, cum_profit_values, color = cum_profit_names)) +
   geom_point(size = 0.5, alpha = 0.15) +
   labs(
-    title = "Cumulative profit over time from betting whenever 'H' is predicted",
+    title = "Results from betting only when 'D' is predicted",
     y = "Cumulative profit",
     x = "Date",
     color = "Models"
@@ -119,7 +119,9 @@ H_pred <- profit %>%
     text = element_text(family = "Optima")
   )
 
-H_pred + A_pred + D_pred + guide_area() + plot_layout(guides = "collect")
+H_pred + A_pred + D_pred + guide_area() + plot_layout(guides = "collect") + plot_annotation(
+  title = "Cumulative profits from betting $1 every time",
+  theme = theme(text = element_text(family = "Optima", size = 16)))
 
 profit %>% 
   pivot_longer(ends_with("cum_profit"),names_to = "cum_profit_names", values_to = "cum_profit_values") %>% 
