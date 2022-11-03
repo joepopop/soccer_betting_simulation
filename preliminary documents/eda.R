@@ -1,15 +1,18 @@
+# load packages and required objects ----
+
 library(tidyverse)
+load("data/processed/initial_split.rda")
 
-# load required objects ----
-load("data/initial_split.rda")
+# analyze data ----
 
+# observe correlations between quantitative variables
 football_train %>% 
   mutate(attendance = ifelse(is.na(attendance), mean(attendance, na.rm = T), attendance)) %>%
   select_if(is.numeric) %>% 
   cor() %>% 
   corrplot::corrplot()
 
-
+# generate plots to analyze qualitative variables
 football_train %>% 
   ggplot(aes(result, mean_score_home)) +
   geom_violin() +
@@ -18,7 +21,6 @@ football_train %>%
 football_train %>% 
   ggplot(aes(result, mean_points_home)) +
   geom_violin()
-
 
 football_train %>% 
   mutate(day = factor(day, levels = c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"))) %>% 
@@ -29,14 +31,11 @@ football_train %>%
 football_train %>% 
   ggplot(aes(result, attendance)) +
   geom_boxplot() 
-# draws and away wins happen when there are few attendees!
 
 football_train %>% 
   ggplot(aes(result, attendance)) +
   geom_boxplot() +
   facet_wrap(~season)
-
-# will include season to account for attendance difference in 2021
 
 football_train %>% 
   ggplot(aes(result, b365h)) +

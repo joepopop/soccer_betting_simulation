@@ -1,3 +1,4 @@
+# load packages, deal with conflicts, set seed, and prepare for parallel processing ----
 library(tidymodels)
 library(tidyverse)
 library(doMC)
@@ -11,11 +12,11 @@ set.seed(3012)
 # usemodels::use_glmnet(result ~ . , data = football_train, verbose = T, clipboard = T)
 
 # load required objects ----
-load("data/initial_setup.rda")
-load("data/initial_split.rda")
+load("data/processed/initial_setup.rda")
+load("data/processed/initial_split.rda")
 
 
-# define recipe ---- 
+# recipe ---- 
 # glmnet_recipe <-
 #   recipe(formula = result ~ ., data = football_train) %>%
 #   step_string2factor(all_nominal_predictors()) %>%
@@ -71,4 +72,4 @@ glmnet_res_1 <-
   )
 
 # save results ----
-save(glmnet_res_1, glmnet_wflow, file = "results/glmnet_res_1.rda")
+save(glmnet_res_1, glmnet_wflow, file = "results/models/glmnet_res_1.rda")

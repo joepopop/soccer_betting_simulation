@@ -1,3 +1,4 @@
+# load packages and data, deal with conflicts, and set seed ----
 library(tidyverse)
 library(tidymodels)
 library(lubridate)
@@ -5,9 +6,9 @@ library(lubridate)
 tidymodels_prefer()
 set.seed(3012)
 
-full_data <- read_rds("data/full_data.rds")
+full_data <- read_rds("data/processed/full_data.rds")
 
-# split & fold ----
+# split data into training and testing sets and create fold ----
 
 football_split <- full_data %>% 
   initial_split(prop = 0.8, strata = result)
@@ -19,7 +20,7 @@ football_fold <-
   football_train %>% 
   vfold_cv(v = 5, repeats = 5, strata = result)
 
-# other ----
+# define custom metric ----
 keep_pred <- control_grid(save_pred = T, save_workflow = T)
 
 precision_micro <- function(data, truth, estimate, estimator, na_rm = TRUE, event_level = yardstick_event_level(), ...) {
@@ -39,5 +40,5 @@ precision_micro <- new_class_metric(precision_micro, "maximize")
 football_metric <- metric_set(precision_micro)
 
 # save initial setup ----
-save(football_fold, keep_pred, football_metric, file = "data/initial_setup.rda")
-save(football_test, football_train, file = "data/initial_split.rda")
+save(football_fold, keep_pred, football_metric, file = "data/processed/initial_setup.rda")
+save(football_test, football_train, file = "data/processed/initial_split.rda")

@@ -1,3 +1,4 @@
+# load packages, deal with conflicts, set seed, and prepare for parallel processing ----
 library(tidymodels)
 library(tidyverse)
 library(doMC)
@@ -8,46 +9,47 @@ registerDoMC(cores = detectCores(logical = T))
 tidymodels_prefer()
 set.seed(3012)
 
-# usemodels::use_xgboost(result ~ . , data = football_train, verbose = T, clipboard = T)
+# usemodels::use_rf(result ~ . , data = football_train, verbose = T, clipboard = T)
 
 # load required objects ----
-load("data/initial_setup.rda")
-load("data/initial_split.rda")
+load("data/processed/initial_setup.rda")
+load("data/processed/initial_split.rda")
 
-xgboost_recipe <-
+# recipe ----
+rf_recipe <-
   recipe(formula = result ~ b365h + b365d + b365a + bwh + bwd + bwa + iwh + iwd + iwa + psh + psd + psa + whh + whd + wha + vch + vcd + vca, data = football_train) %>%
   step_normalize(all_numeric_predictors()) 
 
 # check recipe
-xgboost_recipe %>%
+rf_recipe %>%
   prep() %>%
   bake(new_data = NULL) %>% 
   view()
 
 # model specification ----
-xgboost_spec <- 
-  boost_tree(mtry = tune(), learn_rate = tune()) %>% 
+rf_spec <- 
+  rand_forest(mtry = tune(), min_n = tune()) %>% 
   set_mode("classification") %>% 
-  set_engine("xgboost") 
+  set_engine("ranger") 
 
 
 # workflow ----
-xgboost_wflow <- 
+rf_wflow <- 
   workflow() %>% 
-  add_recipe(xgboost_recipe) %>% 
-  add_model(xgboost_spec) 
+  add_recipe(rf_recipe) %>% 
+  add_model(rf_spec) 
 
 # tuning parameter grid ----
-xgboost_params <- hardhat::extract_parameter_set_dials(xgboost_wflow) %>% 
+rf_params <- hardhat::extract_parameter_set_dials(rf_wflow) %>% 
   update(
-    learn_rate = min_n(range = c(-5, 0)),
+    min_n = min_n(range = c(5, 20)),
     mtry = mtry(range = c(2, 10))
   )
-grid_info <- grid_regular(xgboost_params, levels = 3)
+grid_info <- grid_regular(rf_params, levels = 3)
 grid_info %>% view()
 # fit to resamples ----
-xgboost_res_1 <- 
-  xgboost_wflow %>% 
+rf_res_1 <- 
+  rf_wflow %>% 
   tune_grid(
     resamples = football_fold,
     control = stacks::control_stack_grid(),
@@ -56,4 +58,4 @@ xgboost_res_1 <-
   )
 
 # save results ----
-save(xgboost_res_1, xgboost_wflow, file = "results/xgboost_res_1.rda")
+save(rf_res_1, rf_wflow, file = "results/models/rf_res_1.rda")

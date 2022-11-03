@@ -1,3 +1,4 @@
+# load packages, deal with conflicts, and set seed ----
 library(tidymodels)
 library(probably)
 library(tidyverse)
@@ -8,8 +9,8 @@ conflicted::conflict_prefer("lag", "dplyr")
 set.seed(3012)
 
 # load required objects ----
-load("data/initial_setup.rda")
-load("data/initial_split.rda")
+load("data/processed/initial_setup.rda")
+load("data/processed/initial_split.rda")
 models_list <- c("glmnet", "knn", "rf", "xgboost")
 training_precision <- tibble(model = character(),
                              mean = double()
@@ -20,7 +21,7 @@ profit <- tibble(id = 1:1654)
 for (i in 1:length(models_list)){
   
   # load tuned results and workflows
-  load(str_c("results/", models_list[i], "_res_1.rda"))
+  load(str_c("results/models/", models_list[i], "_res_1.rda"))
 
   # compile table with model and respective precision on training set
   training_precision <- training_precision %>%
@@ -41,7 +42,7 @@ for (i in 1:length(models_list)){
 
 }
 
-training_precision <- training_precision %>%
+training_precision %>%
   bind_rows(football_train %>%
               group_by(result) %>%
               count() %>%

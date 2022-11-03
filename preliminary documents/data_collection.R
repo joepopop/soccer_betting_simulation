@@ -1,20 +1,27 @@
+# load packages ----
 library(tidyverse)
 library(rvest)
 library(readxl)
 library(lubridate)
 
 # fixture data ----
-fixture_files <- dir(path = "fixture_data/", pattern = '\\.xls', full.names = T)
-fixture_data <- fixture_files %>%
-  map(get_table) %>%    
-  reduce(bind_rows)  
 
+# get paths of excel files with fixture data
+fixture_files <- dir(path = "data/raw/fixture_data/", pattern = '\\.xls', full.names = T)
+
+# define function to retrieve table from excel files
 get_table <- function(file){
   file %>% 
     read_html(encoding = "UTF-8") %>% 
     html_table() 
 }
 
+# gather tables from excel files into a dataframe
+fixture_data <- fixture_files %>%
+  map(get_table) %>%    
+  reduce(bind_rows)  
+
+# process fixture data
 fixture_data <- fixture_data %>%  
   janitor::clean_names() %>% 
   filter(!grepl('Relegation', round)) %>% 
@@ -74,18 +81,17 @@ fixture_data <- fixture_data %>%
   select(-points_home, -xg_home, -score_home, -points_away, -xg_away, -score_away, -starts_with("lag")) %>% 
   drop_na(mean_points_home, mean_score_home, mean_points_away, mean_score_away)
   
-
-
-naniar::gg_miss_var()
-
-
-
 # odds_data ----
-odds_files <- dir(path = "odds_data/", pattern = '\\.csv', full.names = T)
+
+# get paths of csv files with odds data
+odds_files <- dir(path = "data/raw/odds_data/", pattern = '\\.csv', full.names = T)
+
+# gather tables from csv files into dataframe
 odds_data <- odds_files %>%
   map(read_csv) %>%  
   reduce(bind_rows)        
 
+# process odds data
 odds_data <- odds_data %>% 
   janitor::clean_names() %>% view()
   rename(home = home_team) %>%
@@ -137,19 +143,16 @@ odds_data <- odds_data %>%
       TRUE ~ home)
   )
 
-# combined data ----
-full_data <- full_join(fixture_data, odds_data) %>% 
+# combine data ----
+
+# full join fixture and odds data 
+  full_data <- full_join(fixture_data, odds_data) %>% 
   select(-contains("365c"), -contains("avg")) %>% 
   drop_na(wk, b365h, b365d, b365a, bwh, bwd, bwa, iwh, iwd, iwa, psh, psd, psa, whh, whd, wha, vch, vcd, vca) %>% 
   mutate(season = as.character(season))
 
-
-
-  # naniar::miss_var_summary() %>%
-  # view()
-
 # save data ----
-write_rds(full_data, "data/full_data.rds")
-write_rds(fixture_data, "data/fixture_data.rds")
-write_rds(odds_data, "data/odds_data.rds")
+write_rds(full_data, "data/processed/full_data.rds")
+write_rds(fixture_data, "data/processed/fixture_data.rds")
+write_rds(odds_data, "data/processed/odds_data.rds")
 

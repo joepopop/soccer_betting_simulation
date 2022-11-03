@@ -1,19 +1,21 @@
+# load packages, deal with conflicts, set seed, and prepare for parallel processing ----
 library(tidymodels)
 library(tidyverse)
 library(doMC)
 
-# register cores/threads for parallel processing
-registerDoMC(cores = detectCores(logical = T))
-
 tidymodels_prefer()
 set.seed(3012)
+
+# register cores/threads for parallel processing
+registerDoMC(cores = detectCores(logical = T))
 
 # usemodels::use_knn(result ~ . , data = football_train, verbose = T, clipboard = T)
 
 # load required objects ----
-load("data/initial_setup.rda")
-load("data/initial_split.rda")
+load("data/processed/initial_setup.rda")
+load("data/processed/initial_split.rda")
 
+# recipe ---- 
 knn_recipe <-
   recipe(formula = result ~ b365h + b365d + b365a + bwh + bwd + bwa + iwh + iwd + iwa + psh + psd + psa + whh + whd + wha + vch + vcd + vca, data = football_train) %>%
   step_normalize(all_numeric_predictors()) %>% 
@@ -32,7 +34,6 @@ knn_spec <-
   set_mode("classification") %>% 
   set_engine("kknn") 
 
-
 # workflow ----
 knn_wflow <- 
   workflow() %>% 
@@ -47,6 +48,7 @@ knn_params <- hardhat::extract_parameter_set_dials(knn_wflow) %>%
   )
 grid_info <- grid_regular(knn_params, levels = 3)
 grid_info %>% view()
+
 # fit to resamples ----
 knn_res_1 <- 
   knn_wflow %>% 
@@ -58,4 +60,4 @@ knn_res_1 <-
   )
 
 # save results ----
-save(knn_res_1, knn_wflow, file = "results/knn_res_1.rda")
+save(knn_res_1, knn_wflow, file = "results/models/knn_res_1.rda")

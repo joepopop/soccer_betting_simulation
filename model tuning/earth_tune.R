@@ -1,3 +1,4 @@
+# load packages, deal with conflicts, set seed, and prepare for parallel processing ----
 library(tidymodels)
 library(tidyverse)
 library(doMC)
@@ -8,46 +9,47 @@ registerDoMC(cores = detectCores(logical = T))
 tidymodels_prefer()
 set.seed(3012)
 
-# usemodels::use_rf(result ~ . , data = football_train, verbose = T, clipboard = T)
+# usemodels::use_earth(result ~ . , data = football_train, verbose = T, clipboard = T)
 
 # load required objects ----
-load("data/initial_setup.rda")
-load("data/initial_split.rda")
+load("data/processed/initial_setup.rda")
+load("data/processed/initial_split.rda")
 
-rf_recipe <-
+# recipe ----
+earth_recipe <-
   recipe(formula = result ~ b365h + b365d + b365a + bwh + bwd + bwa + iwh + iwd + iwa + psh + psd + psa + whh + whd + wha + vch + vcd + vca, data = football_train) %>%
   step_normalize(all_numeric_predictors()) 
 
 # check recipe
-rf_recipe %>%
+earth_recipe %>%
   prep() %>%
   bake(new_data = NULL) %>% 
   view()
 
 # model specification ----
-rf_spec <- 
-  rand_forest(mtry = tune(), min_n = tune()) %>% 
+earth_spec <- 
+  mars(num_terms = tune(), prod_degree = tune(), prune_method = "none") %>% 
   set_mode("classification") %>% 
-  set_engine("ranger") 
+  set_engine("earth") 
 
 
 # workflow ----
-rf_wflow <- 
+earth_wflow <- 
   workflow() %>% 
-  add_recipe(rf_recipe) %>% 
-  add_model(rf_spec) 
+  add_recipe(earth_recipe) %>% 
+  add_model(earth_spec) 
 
 # tuning parameter grid ----
-rf_params <- hardhat::extract_parameter_set_dials(rf_wflow) %>% 
-  update(
-    min_n = min_n(range = c(5, 20)),
-    mtry = mtry(range = c(2, 10))
+earth_params <- hardhat::extract_parameter_set_dials(earth_wflow) %>% 
+  update(num_terms = num_terms(range = c(2, 10)),
+         prod_degree = prod_degree(range = c(1, 4))
   )
-grid_info <- grid_regular(rf_params, levels = 3)
+grid_info <- grid_regular(earth_params, levels = 3)
 grid_info %>% view()
+
 # fit to resamples ----
-rf_res_1 <- 
-  rf_wflow %>% 
+earth_res_1 <- 
+  earth_wflow %>% 
   tune_grid(
     resamples = football_fold,
     control = stacks::control_stack_grid(),
@@ -56,4 +58,4 @@ rf_res_1 <-
   )
 
 # save results ----
-save(rf_res_1, rf_wflow, file = "results/rf_res_1.rda")
+save(earth_res_1, file = "results/models/earth_res_1.rda")
