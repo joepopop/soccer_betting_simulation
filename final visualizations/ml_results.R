@@ -29,7 +29,7 @@ profit <- tibble(id = 1:1654)
 for (i in 1:length(models_list)){
   
   # load tuned results and workflows
-  load(str_c("results/models/", models_list[i], "_res_1.rda"))
+  load(str_c("model tuning/results/", models_list[i], "_res_1.rda"))
 
   # compile table with model and respective precision on training set
   training_precision <- training_precision %>%
@@ -68,11 +68,12 @@ training_precision %>%
 temp <- testing_predictions %>%
   bind_cols(football_test) %>%
   mutate(
-    max_h = pmax(b365h, bwh, iwh, psh, whh, vch, na.rm = T),
-    max_d = pmax(b365d, bwd, iwd, psd, whd, vcd, na.rm = T),
-    max_a = pmax(b365a, bwa, iwa, psa, wha, vca, na.rm = T),
+    # max_h = pmax(b365h, bwh, iwh, psh, whh, vch, na.rm = T),
+    # max_d = pmax(b365d, bwd, iwd, psd, whd, vcd, na.rm = T),
+    # max_a = pmax(b365a, bwa, iwa, psa, wha, vca, na.rm = T),
     id = row_number()
   ) %>% 
+  drop_na(max_h, max_a, max_d) %>% 
   select(id, result, contains(".pred_class"), max_h, max_a, max_d)
 
 # create dataframe with id, date, and result to loop over in cum_profit function
@@ -118,6 +119,7 @@ if (pred %in% c("H", "D", "A")) {
                cum_profit_names == "rf_cum_profit" ~ "Random Forest",
                cum_profit_names == "xgboost_cum_profit" ~ "Boosted Trees" 
              )) %>% 
+    filter(date > ymd("2019-7-1")) %>% 
     ggplot(aes(date, cum_profit_values, color = cum_profit_names)) +
     geom_point(size = 0.5, alpha = 0.15) +
     labs(
@@ -183,7 +185,8 @@ if (pred %in% c("H", "D", "A")) {
 }
 
 # output plot
-ALL_pred + cum_profit("H") + cum_profit("A") + cum_profit("D") + plot_layout(guides = "collect") + plot_annotation(
+cum_profit("ALL") + cum_profit("H") + cum_profit("A") + cum_profit("D") + 
+  plot_layout(guides = "collect") + plot_annotation(
   title = "Cumulative profits from $1 bets",
   theme = theme(text = element_text(family = "Optima", size = 16)))
 
