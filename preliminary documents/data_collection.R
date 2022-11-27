@@ -93,7 +93,7 @@ odds_data <- odds_files %>%
 
 # process odds data
 odds_data <- odds_data %>% 
-  janitor::clean_names() %>% view()
+  janitor::clean_names() %>% 
   rename(home = home_team) %>%
   mutate(
     date = dmy(date)
@@ -147,7 +147,7 @@ odds_data <- odds_data %>%
 
 # full join fixture and odds data 
   full_data <- full_join(fixture_data, odds_data) %>% 
-  select(-contains("365c"), -contains("avg")) %>% 
+  select(-contains("365c")) %>% 
   drop_na(wk, b365h, b365d, b365a, bwh, bwd, bwa, iwh, iwd, iwa, psh, psd, psa, whh, whd, wha, vch, vcd, vca) %>% 
   mutate(season = as.character(season))
 
