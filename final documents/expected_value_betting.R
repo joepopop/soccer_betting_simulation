@@ -40,7 +40,7 @@ ev %>%
   ggplot(aes(date, cum_profit)) +
   geom_point(size = 0.1, alpha = 0.75, color = "darkgreen") +
   labs(
-    title = "Positive EV: cumulative profit from $1 bets",
+    title = "Positive EV: cumulative profit from $10 bets",
     x = "Date",
     y = "Cumulative profit ($)"
   ) +

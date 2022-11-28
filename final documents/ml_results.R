@@ -170,7 +170,7 @@ if (pred %in% c("H", "D", "A")) {
       ggplot(aes(date, cum_profit_values, color = cum_profit_names)) +
       geom_point(size = 0.5, alpha = 0.15) +
       labs(
-        title = "Results from betting on all games",
+        title = "Bet on all games",
         y = "Cumulative profit ($)",
         x = "Date",
         color = "Models"
@@ -187,7 +187,7 @@ if (pred %in% c("H", "D", "A")) {
 # output plot
 cum_profit("ALL") + cum_profit("H") + cum_profit("A") + cum_profit("D") + 
   plot_layout(guides = "collect") + plot_annotation(
-  title = "Cumulative profits from $10 bets",
+  title = "ML: cumulative profits from $10 bets",
   theme = theme(text = element_text(family = "Optima", size = 16)))
 
 

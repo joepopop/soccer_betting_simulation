@@ -48,7 +48,7 @@ unbiased_arbitrage %>%
 unbiased_arbitrage_compounded %>% 
   head(50) %>%
   ggplot(aes(date, compounded_cum_profit)) +
-  geom_point(size = 0.1, alpha = 0.75, color = "#c99800") +
+  geom_point(size = 1, alpha = 0.75, color = "#c99800") +
   labs(
     title = "Unbiased arbitrage (compounded): cumulative profit from $400 bets",
     x = "Date",
