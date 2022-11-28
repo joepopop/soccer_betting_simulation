@@ -98,10 +98,10 @@ if (pred %in% c("H", "D", "A")) {
         filter(get(str_c(models_list[i], ".pred_class")) == pred) %>%
         mutate(
           !! str_c(models_list[i], "_profit")  := case_when(
-            result == get(str_c(models_list[i], ".pred_class")) & result == "H" ~ (max_h) - 1,
-            result == get(str_c(models_list[i], ".pred_class")) & result == "D" ~ (max_d) - 1,
-            result == get(str_c(models_list[i], ".pred_class")) & result == "A" ~ (max_a) - 1,
-            TRUE ~ -1),
+            result == get(str_c(models_list[i], ".pred_class")) & result == "H" ~ 10*(max_h-1),
+            result == get(str_c(models_list[i], ".pred_class")) & result == "D" ~ 10*(max_d-1),
+            result == get(str_c(models_list[i], ".pred_class")) & result == "A" ~ 10*(max_a-1),
+            TRUE ~ -10),
           !! str_c(models_list[i], "_cum_profit")  := cumsum(get(str_c(models_list[i], "_profit")))
         ) %>%
         select(id, str_c(models_list[i], ".pred_class"), str_c(models_list[i], "_profit"), str_c(models_list[i], "_cum_profit"))
@@ -129,7 +129,7 @@ if (pred %in% c("H", "D", "A")) {
       color = "Models"
     ) +
     scale_color_manual(values = c("red", "blue", "purple", "green")) +
-    scale_y_continuous(breaks=seq(-60,60,15)) +
+    scale_y_continuous(breaks=seq(-600,600,150)) +
     theme_minimal() +
     theme(
       text = element_text(family = "Optima")
@@ -146,10 +146,10 @@ if (pred %in% c("H", "D", "A")) {
           temp %>%
             mutate(
               !! str_c(models_list[i], "_profit")  := case_when(
-                result == get(str_c(models_list[i], ".pred_class")) & result == "H" ~ (max_h) - 1,
-                result == get(str_c(models_list[i], ".pred_class")) & result == "D" ~ (max_d) - 1,
-                result == get(str_c(models_list[i], ".pred_class")) & result == "A" ~ (max_a) - 1,
-                TRUE ~ -1),
+                result == get(str_c(models_list[i], ".pred_class")) & result == "H" ~ 10*(max_h-1),
+                result == get(str_c(models_list[i], ".pred_class")) & result == "D" ~ 10*(max_d-1),
+                result == get(str_c(models_list[i], ".pred_class")) & result == "A" ~ 10*(max_a-1),
+                TRUE ~ -10),
               !! str_c(models_list[i], "_cum_profit")  := cumsum(get(str_c(models_list[i], "_profit")))
             ) %>%
             select(id, str_c(models_list[i], ".pred_class"), str_c(models_list[i], "_profit"), str_c(models_list[i], "_cum_profit"))
@@ -176,7 +176,7 @@ if (pred %in% c("H", "D", "A")) {
         color = "Models"
       ) +
       scale_color_manual(values = c("red", "blue", "purple", "green")) +
-      scale_y_continuous(breaks=seq(-60,60,15)) +
+      scale_y_continuous(breaks=seq(-600,600,150)) +
       theme_minimal() +
       theme(
         text = element_text(family = "Optima")
@@ -187,7 +187,7 @@ if (pred %in% c("H", "D", "A")) {
 # output plot
 cum_profit("ALL") + cum_profit("H") + cum_profit("A") + cum_profit("D") + 
   plot_layout(guides = "collect") + plot_annotation(
-  title = "Cumulative profits from $1 bets",
+  title = "Cumulative profits from $10 bets",
   theme = theme(text = element_text(family = "Optima", size = 16)))
 
 

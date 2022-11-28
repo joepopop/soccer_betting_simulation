@@ -1,10 +1,9 @@
 # load packages
 library(tidyverse)
 library(lubridate)
-load("data/processed/initial_split.rda")
 
 # add cumulative profit column with ev strategy 
-ev <- football_test %>% 
+ev <- read_rds("data/processed/full_data.rds") %>% 
   filter(ymd(date) > "2019-7-1") %>% 
   mutate(
     prob_h = 1/avg_h,
@@ -15,9 +14,9 @@ ev <- football_test %>%
     prob_a = prob_a-(prob_total-1)*(prob_a/prob_total),
     prob_d = prob_d-(prob_total-1)*(prob_d/prob_total),
     prob_total = prob_h+prob_d+prob_a,
-    ev_h = 1*(max_h-1)*prob_h + -1*(1-prob_h),
-    ev_d = 1*(max_d-1)*prob_d + -1*(1-prob_d),
-    ev_a = 1*(max_a-1)*prob_a + -1*(1-prob_a),
+    ev_h = 10*(max_h-1)*prob_h + -10*(1-prob_h),
+    ev_d = 10*(max_d-1)*prob_d + -10*(1-prob_d),
+    ev_a = 10*(max_a-1)*prob_a + -10*(1-prob_a),
     bet = case_when(
       ev_h <= 0 & ev_d <= 0 & ev_a <= 0 ~ "pass",
       pmax(ev_h, ev_d, ev_a) == ev_h ~ "H",
@@ -26,10 +25,10 @@ ev <- football_test %>%
     ),
     profit = case_when(
       bet == "pass" ~ 0,
-      bet == "H" & result == "H" ~ 1*(max_h-1),
-      bet == "D" & result == "D" ~ 1*(max_d-1),
-      bet == "A" & result == "A" ~ 1*(max_a-1),
-      TRUE ~ -1
+      bet == "H" & result == "H" ~ 10*(max_h-1),
+      bet == "D" & result == "D" ~ 10*(max_d-1),
+      bet == "A" & result == "A" ~ 10*(max_a-1),
+      TRUE ~ -10
     ),
     cum_profit = cumsum(replace_na(profit, 0))
   ) %>% 
