@@ -1,12 +1,9 @@
 library(readxl)
 library(tidyverse)
 
-read_excel("final documents/roi_table.xlsx") %>% 
-  select(Method, Profit, `Profit per season`, Matches) %>% 
-  arrange(desc(Matches)) %>%
-  arrange(desc(`Profit per season`)) %>% 
-  rename(`Profit ($)*` = Profit) %>% 
-  rename(`Profit per season ($)*` = `Profit per season`) %>% 
+read_excel("final documents/results_table.xlsx") %>% 
+  arrange(desc(`Number of bets`)) %>%
+  arrange(desc(`Estimated profit per season ($)*`)) %>% 
   filter(!str_detect(Method, "\\((A|D)\\)")) %>%
   filter(Method != "Arbitrage" & Method != "Arbitrage (Compounded)") %>% 
   gt::gt() %>% 

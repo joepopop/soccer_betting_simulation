@@ -1,0 +1,277 @@
+---
+title: "Soccer betting simulation: optimizing long-term profit"
+author: "Joe Omatoi"
+format: pptx
+editor: visual
+---
+
+```{r}
+# load packages
+library(tidyverse)
+library(lubridate)
+full_data <- read_rds("data/processed/full_data.rds")
+```
+
+## Overview
+
+A betting simulation on over 8000 games was implemented.
+
+Three strategies were analyzed and compared: 
+
+1.  Arbitrage betting
+2.  Positive EV betting
+3.  ML-based betting
+
+​The goal is to assess general profitability and the best method for long-term profit
+
+::: notes
+1.  bet on all outcomes when profit is greater than or equal to 0 no matter the outcome
+2.  bet when expected value is greater than 0
+3.  bet according to machine learning predictions
+:::
+
+## Raw data
+
+Data for 8264 league matches in the top 5 European football leagues in the 2019-2020, 2020-2021, and 2021-2022 seasons:
+
+1.  Fixture data ([Sports Reference](https://www.sports-reference.com))
+    -   date, result, home team, away team, attendance, venue, league, referee, goals home, goals away
+2.  Odds data ([Football-Data.co.uk](https://www.football-data.co.uk))
+    -   market maximum, market average, and 6 bookmaker odds (home draw, away)
+
+## Processed data
+
+```{r}
+full_data %>% 
+  filter(!is.na(max_h)) %>% 
+  select(date, result, home, away, b365h, b365d, b365a, max_h, max_d, max_a, avg_h, avg_d, avg_a) %>%
+  slice(1:3) %>% 
+  gt::gt() %>% 
+  gt::tab_options(table.font.names = "Optima")
+```
+
+::: notes
+only bet365 odds are shown and the odds of other 5 bookmakers are omitted because of space
+:::
+
+## 1) Arbitrage betting: formulas
+
+Spot arbitrage opportunity: $$1/odds_h+1/odds_d+1/odds_a<1$$
+
+Required wager amount to ensure risk free bet:
+
+$$
+wager_h = wager_t/(1+(odds_h/odds_d)+(odds_h/odds_a))
+$$
+
+$$
+wager_d = wager_t/(1+(odds_d/odds_h)+(odds_d/odds_a))
+$$
+
+$$
+wager_a = wager_t/(1+(odds_a/odds_h)+(odds_a/odds_d))
+$$
+
+## 1) Arbitrage betting: calculation
+
+```{r}
+unbiased_arbitrage_compounded <- readxl::read_excel("data/processed/unbiased_arbitrage.xlsm") %>% 
+  mutate(
+    wager_h = round(wager_h, 2),
+    wager_d = round(wager_d, 2),
+    wager_a = round(wager_a, 2),
+    wager_total = 400,
+    profit = round(profit, 2),
+    cum_profit = round(cum_profit, 2)
+    ) %>% 
+  select(date, wager_h, wager_d, wager_a, wager_total, compounded_profit, compounded_cum_profit) 
+
+unbiased_arbitrage_compounded %>% 
+  slice(1:5) %>% 
+  gt::gt() %>% 
+  gt::tab_options(table.font.names = "Optima")
+```
+
+## 1) Arbitrage betting: simulation
+
+```{r}
+unbiased_arbitrage_compounded %>% 
+  head(50) %>%
+  ggplot(aes(date, compounded_cum_profit)) +
+  geom_point(size = 1, alpha = 0.75, color = "#c99800") +
+  labs(
+    title = "Unbiased arbitrage (compounded): cumulative profit from $400 bets",
+    x = "Date",
+    y = "Cumulative profit ($)"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "Tw Cen MT")
+  )
+```
+
+## 1) Arbitrage betting: evaluation
+
+-   Advantage: guaranteed and compounded profit
+
+-   Disadvantage: not allowed for long (usually get banned)
+
+## 2) Positive EV betting: formulas
+
+$$
+EV_h = 10(odds_h-1)p_h+(-10)(1-p_h)
+$$
+
+$$
+EV_d = 10(odds_d-1)p_d+(-10)(1-p_d)
+$$
+
+$$
+EV_a = 10(odds_a-1)p_a+(-10)(1-p_a)
+$$
+
+($p$ was calculated using its corresponding $odds_(avg)$, detailed calculation in source code)
+
+## 2) Positive EV betting: calculation
+
+```{r}
+ev <- full_data %>% 
+  filter(ymd(date) > "2019-7-1") %>% 
+  mutate(
+    prob_h = 1/avg_h,
+    prob_d = 1/avg_d,
+    prob_a = 1/avg_a,
+    prob_total = prob_h+prob_d+prob_a,
+    prob_h = prob_h-(prob_total-1)*(prob_h/prob_total),
+    prob_a = prob_a-(prob_total-1)*(prob_a/prob_total),
+    prob_d = prob_d-(prob_total-1)*(prob_d/prob_total),
+    prob_total = prob_h+prob_d+prob_a,
+    ev_h = 10*(max_h-1)*prob_h + -10*(1-prob_h),
+    ev_d = 10*(max_d-1)*prob_d + -10*(1-prob_d),
+    ev_a = 10*(max_a-1)*prob_a + -10*(1-prob_a),
+    bet = case_when(
+      ev_h <= 0 & ev_d <= 0 & ev_a <= 0 ~ "pass",
+      pmax(ev_h, ev_d, ev_a) == ev_h ~ "H",
+      pmax(ev_h, ev_d, ev_a) == ev_d ~ "D",
+      pmax(ev_h, ev_d, ev_a) == ev_a ~ "A",
+    ),
+    profit = case_when(
+      bet == "pass" ~ 0,
+      bet == "H" & result == "H" ~ 10*(max_h-1),
+      bet == "D" & result == "D" ~ 10*(max_d-1),
+      bet == "A" & result == "A" ~ 10*(max_a-1),
+      TRUE ~ -10
+    ),
+    cum_profit = cumsum(replace_na(profit, 0)),
+    ev_h = round(ev_h, digits = 2),
+    ev_d = round(ev_d, digits = 2),
+    ev_a = round(ev_a, digits = 2),
+    wager = 10
+  ) %>% 
+  select(date, ev_h, ev_d, ev_a, bet, wager, result, profit, cum_profit) 
+ev %>% 
+  slice(1:5) %>% 
+  gt::gt() %>% 
+  gt::tab_options(table.font.names = "Optima")
+```
+
+## 2) Positive EV betting: simulation
+
+```{r}
+ev %>% 
+  ggplot(aes(date, cum_profit)) +
+  geom_point(size = 0.1, alpha = 0.75, color = "darkgreen") +
+  labs(
+    title = "Positive EV: cumulative profit from $10 bets",
+    x = "Date",
+    y = "Cumulative profit ($)"
+  ) +
+  theme_minimal() +
+  theme(
+    text = element_text(family = "Tw Cen MT")
+  )
+```
+
+::: notes
+Law of large numbers: in the long run, profits go above \$0.
+
+However, due to short-run fluctuations, many bets need to be placed to see results.
+:::
+
+## 2) Positive EV betting: evaluation
+
+-   Advantage: long-run profit
+
+-   Disadvantage: short-run fluctuations require many bets and make big bets risky
+
+## 3) Machine learning betting: training
+
+### Resampling
+
+-   6612 games for training (80% of total)
+
+-   V-fold cross validation with 5 folds and 5 repeats
+
+-   Precision (true positives/total predicted positives) as performance measure
+
+## 3) Machine learning betting: training
+
+### Models
+
+-   Random forest
+
+-   Boosted trees
+
+-   Elastic net
+
+-   Nearest neighbors
+
+### Predictors
+
+PCA on all 6 bookmakers' odds
+
+::: notes
+-   V-fold cross validation: Although the general recommended number of folds is 10, a lower value was chosen to allow a greater proportion of the dataset to be used for assessment in each fold. There are only 6462 observations and about 44% of the outcomes are home wins: it is likely to only see predictions for home in each fold, and this scenario must be avoided to create a well-rounded model.
+
+-   Precision: Maximizing precision minimizes false positives, which are unacceptable in betting
+
+-   Models: Having a portfolio of multiple models with a good mix of flexible and inflexible models diversifies the risk of under/overfitting.
+
+-   Predictors: a lot of fixtures data like attendance, week, league, mean of previous 5 home goals, away goals, home points, and away points were used, but odds contained far more information necessary to predict more precisely.
+:::
+
+## 3) Machine learning betting: simulation
+
+![](charts/ml_plot_font.png)
+
+## 3) Machine learning betting: evaluation
+
+-   Advantage: high profitability achieved with only betting when draw or away is predicted
+
+-   Disadvantage: limited games to bet per season
+
+## Final comparison
+
+\*profits of machine learning methods are multiplied by 8264/1010 since only 1010 games were available (testing data was 20% of the total and not all games had market max/avg odds)
+
+\*profit of the positive ev method is multiplied by 8264/4963 since only 4963 games had market max/avg odds.
+
+```{r}
+readxl::read_excel("final documents/results_table.xlsx") %>% 
+  arrange(desc(`Number of bets`)) %>%
+  arrange(desc(`Estimated profit per season ($)*`)) %>% 
+  filter(!str_detect(Method, "\\((A|D)\\)")) %>%
+  filter(Method != "Arbitrage" & Method != "Arbitrage (Compounded)") %>% 
+  gt::gt() %>% 
+  gt::tab_options(table.font.names = "Optima")
+```
+
+::: notes
+profit per game would not be a good performance indicator since even if a method has a high profit per game, without the ability to bet on many games, total profit per season may not be high.
+:::
+
+## Thank you!
+
+-   Access source code on my [GitHub](https://github.com/joepopop)
+
+-   [Email](mailto:joeomatoi2023@u.northwestern.edu) me with questions and comments

@@ -132,7 +132,7 @@ if (pred %in% c("H", "D", "A")) {
     scale_y_continuous(breaks=seq(-600,600,150)) +
     theme_minimal() +
     theme(
-      text = element_text(family = "Optima")
+      text = element_text(family = "Tw Cen MT")
     )
 }
   else
@@ -179,7 +179,7 @@ if (pred %in% c("H", "D", "A")) {
       scale_y_continuous(breaks=seq(-600,600,150)) +
       theme_minimal() +
       theme(
-        text = element_text(family = "Optima")
+        text = element_text(family = "Tw Cen MT")
       )
   }
 }
@@ -188,7 +188,8 @@ if (pred %in% c("H", "D", "A")) {
 cum_profit("ALL") + cum_profit("H") + cum_profit("A") + cum_profit("D") + 
   plot_layout(guides = "collect") + plot_annotation(
   title = "ML: cumulative profits from $10 bets",
-  theme = theme(text = element_text(family = "Optima", size = 16)))
+  theme = theme(text = element_text(family = "Tw Cen MT", size = 16)))
+
 
 
 
