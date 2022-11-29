@@ -77,14 +77,14 @@ $$
 ```{r}
 unbiased_arbitrage_compounded <- readxl::read_excel("data/processed/unbiased_arbitrage.xlsm") %>% 
   mutate(
-    wager_h = round(wager_h, 2),
-    wager_d = round(wager_d, 2),
-    wager_a = round(wager_a, 2),
-    wager_total = 400,
-    profit = round(profit, 2),
-    cum_profit = round(cum_profit, 2)
+    wager_h = round(compounded_wager_h, 2),
+    wager_d = round(compounded_wager_d, 2),
+    wager_a = round(compounded_wager_a, 2),
+    wager_total = round(compounded_wager_total, 2),
+    profit = round(compounded_profit, 2),
+    cum_profit = round(compounded_cum_profit, 2)
     ) %>% 
-  select(date, wager_h, wager_d, wager_a, wager_total, compounded_profit, compounded_cum_profit) 
+  select(date, wager_h, wager_d, wager_a, wager_total, profit, cum_profit) 
 
 unbiased_arbitrage_compounded %>% 
   slice(1:5) %>% 
@@ -97,7 +97,7 @@ unbiased_arbitrage_compounded %>%
 ```{r}
 unbiased_arbitrage_compounded %>% 
   head(50) %>%
-  ggplot(aes(date, compounded_cum_profit)) +
+  ggplot(aes(date, cum_profit)) +
   geom_point(size = 1, alpha = 0.75, color = "#c99800") +
   labs(
     title = "Unbiased arbitrage (compounded): cumulative profit from $400 bets",
