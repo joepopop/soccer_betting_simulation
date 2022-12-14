@@ -5,4 +5,4 @@
 - Trained machine learning model that outperformed both arbitrage and positive EV betting in the long run.
 - Estimated profit of $792 per season achieved from $10 bets.
 
-Access report.pdf or report.pptx for a more detailed summary.
+Access report.pdf or report.pptx (explanations included in speaker notes) for a more detailed summary.
