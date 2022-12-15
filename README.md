@@ -1,6 +1,6 @@
 # Soccer betting simulation project
 
-![photo]charts/ml_plot.png
+![photo](charts/ml_plot.png)
 
 - Ran a simulation of soccer betting on over 8000 games.
 - Assessed and compared three betting strategies: 1) arbitrage betting, 2) positive EV betting, 3) machine learning-based betting. 
